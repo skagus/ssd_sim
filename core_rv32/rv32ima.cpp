@@ -1,17 +1,7 @@
 
 #include <stdio.h>
+#include "peri.h"
 #include "rv32ima.h"
-
-
-uint32_t HandleException(uint32_t ir, uint32_t code)
-{
-	// Weird opcode emitted by duktape on exit.
-	if (code == 3)
-	{
-		// Could handle other opcodes here.
-	}
-	return code;
-}
 
 
 void HandleOtherCSRWrite(uint8_t* image, uint16_t csrno, uint32_t value)
@@ -41,7 +31,7 @@ void HandleOtherCSRWrite(uint8_t* image, uint16_t csrno, uint32_t value)
 	}
 }
 
-int32_t MiniRV32IMAStep(struct MiniRV32IMAState* pCpu, uint8_t* image, uint32_t vProcAddress, uint32_t elapsedUs, int count)
+int32_t CPU_Step(RV32IMACtx* pCpu, uint8_t* image, uint32_t vProcAddress, uint32_t elapsedUs, int count)
 {
 	uint32_t new_timer = pCpu->timerl + elapsedUs;
 	if (new_timer < pCpu->timerl) pCpu->timerh++;
@@ -296,7 +286,7 @@ int32_t MiniRV32IMAStep(struct MiniRV32IMAState* pCpu, uint8_t* image, uint32_t 
 								//case 0xf13: rval = 0x00000000; break; //mimpid
 								//case 0xf14: rval = 0x00000000; break; //mhartid
 							default:
-								MINIRV32_OTHERCSR_READ(csrno, rval);
+								//  Read other.. 
 								break;
 						}
 
@@ -328,7 +318,7 @@ int32_t MiniRV32IMAStep(struct MiniRV32IMAState* pCpu, uint8_t* image, uint32_t 
 								//case 0xf13: break; //mimpid
 								//case 0xf14: break; //mhartid
 							default:
-								MINIRV32_OTHERCSR_WRITE(csrno, writeval);
+								HandleOtherCSRWrite(image, csrno, writeval);
 								break;
 						}
 					}
@@ -423,7 +413,11 @@ int32_t MiniRV32IMAStep(struct MiniRV32IMAState* pCpu, uint8_t* image, uint32_t 
 			}
 		}
 
-		MINIRV32_POSTEXEC(pc, ir, trap);
+		if ((trap > 0)&& (fail_on_all_faults))
+		{
+			printf("FAULT\n");
+			return 3;
+		}
 
 		// Handle traps and interrupts.
 		if (trap)
