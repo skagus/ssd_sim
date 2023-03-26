@@ -1,9 +1,9 @@
 #pragma once
 #include "types.h"
+#include "core.h"
 
 #define RET_SLEEP		FF32
 #define MAX_MEM_CHUNK	(3)	// 
-
 
 union CmdFormat
 {
@@ -142,52 +142,3 @@ enum CsrId
 	NUM_CSR,
 };
 
-
-enum MemRet
-{
-	MR_OK,
-	MR_OUT_RANGE,
-	MR_ERROR,
-	NUM_MR,
-};
-
-class MemChunk
-{
-private:
-	uint8* mpMem;
-	uint32 mnBase;
-	uint32 mnSize;
-
-	inline bool isInRange(uint32 nAddr)
-	{
-		return ((mnBase <= nAddr) && (nAddr < mnBase + mnSize));
-	}
-
-public:
-	virtual void Init(uint32 nBase, uint32 nInSize, uint8* pChunk)
-	{
-		mnBase = nBase;
-		mnSize = nInSize;
-		mpMem = pChunk;
-	}
-	template <typename T>
-	MemRet Load(uint32 nAddr, T* pnVal)
-	{
-		if (isInRange(nAddr))
-		{
-			*pnVal = *(T*)(mpMem + (nAddr - mnBase));
-			return MR_OK;
-		}
-		return MR_OUT_RANGE;
-	}
-	template <typename T>
-	MemRet Store(uint32 nAddr, T nVal)
-	{
-		if (isInRange(nAddr))
-		{
-			*(T*)(mpMem + (nAddr - mnBase)) = nVal;
-			return MR_OK;
-		}
-		return MR_OUT_RANGE;
-	}
-};

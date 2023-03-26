@@ -8,7 +8,7 @@
 #define UN_SUPPORTED()		assert(false)
 #define CASE_UNDEFINED()	default:{UN_SUPPORTED();break;}
 
-class RV32Core
+class RV32Core: public CpuCore
 {
 private:
 	uint32 mnPC;
@@ -16,7 +16,7 @@ private:
 	uint32 maCSR[NUM_CSR];
 
 	uint8 mnCntMem;
-	MemChunk maChunk[MAX_MEM_CHUNK];
+	Memory* maChunk[MAX_MEM_CHUNK];
 
 	uint32 mnTagedAddr;	///< Tag for atommic.
 
@@ -26,7 +26,7 @@ private:
 		MemRet eRet;
 		for (uint32 nChunk = 0; nChunk < mnCntMem; nChunk++)
 		{
-			eRet = maChunk[nChunk].Load(nAddr, pnVal);
+			eRet = maChunk[nChunk]->Load(nAddr, pnVal);
 			if (MR_OUT_RANGE != eRet)
 			{
 				return eRet;
@@ -41,7 +41,7 @@ private:
 		MemRet eRet;
 		for (uint32 nChunk = 0; nChunk < mnCntMem; nChunk++)
 		{
-			eRet = maChunk[nChunk].Store(nAddr, nVal);
+			eRet = maChunk[nChunk]->Store(nAddr, nVal);
 			if (MR_OUT_RANGE != eRet)
 			{
 				return eRet;
@@ -504,10 +504,9 @@ public:
 		maCSR[mcycle] = 0;
 	}
 
-	void AddMemChunk(uint32 nBaseAddr, uint32 nSize, uint8* pChunk)
+	void AddMemory(Memory* pMem)
 	{
-		MemChunk* pMem = maChunk + mnCntMem;
-		pMem->Init(nBaseAddr, nSize, pChunk);
+		maChunk[mnCntMem] = pMem;
 		mnCntMem++;
 	}
 
@@ -520,7 +519,7 @@ public:
 		{
 			uint32 nPC = mnPC;
 			INC_PC();
-			printf("0x%08X: %8X \n", nPC, stInst.nRaw);
+//			printf("0x%08X: %8X \n", nPC, stInst.nRaw);
 
 			switch (stInst.B.nOpc)
 			{
@@ -685,40 +684,8 @@ public:
 	}
 };
 
-#define BIN_BASE	0x00
 
-int main(int argc, char* argv[])
+CpuCore* CreateCore()
 {
-	RV32Core stCore;
-	uint32 nMemSize = 0;
-	stCore.Init(BIN_BASE);
-
-	/*
-	* beq_bne_loop.bin
-	* bltu.bin
-	* lb_sb.in
-	* lh_sh.bin
-	* lw_sw_offset.bin
-	* memory.bin
-	* 
-	*/
-
-	FILE* fpBin = fopen(argv[1], "rb");
-//	FILE* fpBin = fopen("../test/beq_bne_loop.bin", "rb");
-//	FILE* fpBin = fopen("../test/memory.bin", "rb");
-
-	fseek(fpBin, 0, SEEK_END);
-	uint32 nBinSize = ftell(fpBin);
-	nMemSize = nBinSize + 0x10000;
-	fseek(fpBin, 0, SEEK_SET);
-
-	uint8* pCodeMem = (uint8*)malloc(nMemSize);
-	fread(pCodeMem, 1, nBinSize, fpBin);
-	fclose(fpBin);
-	stCore.AddMemChunk(BIN_BASE, nMemSize, pCodeMem);
-
-	while (true)
-	{
-		stCore.Step();
-	}
+	return new RV32Core();
 }
