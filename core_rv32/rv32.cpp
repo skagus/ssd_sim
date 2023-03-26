@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "macro.h"
 #include "rv32.h"
 
-#define ASSERT(x)			assert(x)
 #define INC_PC()			(mnPC += 4)
 #define UN_SUPPORTED()		assert(false)
 #define CASE_UNDEFINED()	default:{UN_SUPPORTED();break;}
@@ -17,6 +17,8 @@ private:
 
 	uint8 mnCntMem;
 	MemChunk maChunk[MAX_MEM_CHUNK];
+
+	uint32 mnTagedAddr;	///< Tag for atommic.
 
 	template <typename T>
 	MemRet load(uint32 nAddr, T* pnVal)
@@ -292,52 +294,109 @@ private:
 		}
 	}
 
+	/**
+	* A extention.
+	* 부가 설명.
+	* Load Reserved는 load와 동일한데, reservation을 등록한다는 점이 있고, 
+	* Store Conditional은 reserved된 memory가 다른 명령에 의해서 update되었다면, updata가 실패한다.
+	* 실제 구현은 tag등을 걸어놓아서 update되지 않았음을 보증하게 될텐데, 
+	* resource제약 등으로, memory전체에 대해서 1개만 tagging을 하거나, 
+	* memory 영역을 나누어서 영역별 tagging을 하는 방식을 쓰기도 한다. 
+	* 
+	* 이 개념은 multi core환경에서 의미있는 것으로, single core에서는 무시 가능한듯..
+	*/
 	void doAtomic(CmdFormat stInst)
 	{
+		uint32 nVal;
+		uint32 nAddrS1 = maRegs[stInst.R.nRs1];
+
+		static uint32 nResevedAddr;
+
 		switch (stInst.R.nFunExt)
 		{
-			case 0b00010:	// LR.W
+			case 0b00010:	// LR.W : Load Reserved.
 			{
+				nResevedAddr = nAddrS1;
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = nVal;
 				break;
 			}
-			case 0b00011:	// SC.W
+			case 0b00011:	// SC.W : Store Conditional.
 			{
+				if (nResevedAddr == nAddrS1) // success.
+				{
+					store(nAddrS1, maRegs[stInst.R.nRs2]);
+					maRegs[stInst.R.nRd] = 0;
+				}
+				else
+				{
+					maRegs[stInst.R.nRd] = 1;
+				}
+				nResevedAddr = FF32;
 				break;
 			}
 			case 0b00001:	// SWAP.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs2];
+				maRegs[stInst.R.nRs2] = nVal;
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b00000:	// ADD.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = nVal + maRegs[stInst.R.nRs2];
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b00100:	// XOR.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = nVal ^ maRegs[stInst.R.nRs2];
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b01100:	// AND.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = nVal & maRegs[stInst.R.nRs2];
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b01000:	// OR.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = nVal | maRegs[stInst.R.nRs2];
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b10000:	// MIN.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = MIN((int32)nVal, (int32)maRegs[stInst.R.nRs2]);
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b10100:	// MAX.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = MAX((int32)nVal, (int32)maRegs[stInst.R.nRs2]);
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b11000:	// MINU.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = MIN(nVal, maRegs[stInst.R.nRs2]);
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			case 0b11100:	// MAXU.W
 			{
+				load(nAddrS1, &nVal);
+				maRegs[stInst.R.nRd] = MAX(nVal, maRegs[stInst.R.nRs2]);
+				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
 			CASE_UNDEFINED();

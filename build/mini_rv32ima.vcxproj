@@ -19,16 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\core_rv32\default64mbdtc.h" />
-    <ClInclude Include="..\core_rv32\peri.h" />
+    <ClInclude Include="..\core_rv32\macro.h" />
     <ClInclude Include="..\core_rv32\rv32.h" />
-    <ClInclude Include="..\core_rv32\rv32ima.h" />
+    <ClInclude Include="..\core_rv32\types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\core_rv32\main.cpp" />
-    <ClCompile Include="..\core_rv32\peri.cpp" />
     <ClCompile Include="..\core_rv32\rv32.cpp" />
-    <ClCompile Include="..\core_rv32\rv32ima.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
