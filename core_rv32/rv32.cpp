@@ -194,13 +194,13 @@ private:
 
 	void doArithImm(CmdFormat stInst)
 	{
+		uint32 nImm = stInst.I.nImm;
+		if (nImm & 0x800) nImm |= 0xFFFFF000;
 		switch (stInst.I.nFun)
 		{
 			case 0b000: // ADDI.
 			{
-				uint32 nVal = stInst.I.nImm;
-				if (nVal & 0x800) nVal |= 0xFFFFF000;
-				maRegs[stInst.I.nRd] = (int32)maRegs[stInst.I.nRs1] + (int32)nVal;
+				maRegs[stInst.I.nRd] = (int32)maRegs[stInst.I.nRs1] + (int32)nImm;
 				break;
 			}
 			case 0b001:	// SLLI
@@ -224,27 +224,27 @@ private:
 			}
 			case 0b010: // SLTI
 			{
-				maRegs[stInst.I.nRd] = (int32_t)maRegs[stInst.I.nRs1] < (int32_t)stInst.I.nImm;
+				maRegs[stInst.I.nRd] = (int32)maRegs[stInst.I.nRs1] < (int32)nImm;
 				break;
 			}
 			case 0b011: // SLTIU
 			{
-				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] < stInst.I.nImm;
+				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] < nImm;
 				break;
 			}
 			case 0b100:	// XORI
 			{
-				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] ^ stInst.I.nImm;
+				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] ^ nImm;
 				break;
 			}
 			case 0b110:	// ORI
 			{
-				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] | stInst.I.nImm;
+				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] | nImm;
 				break;
 			}
 			case 0b111: // ANDI.
 			{
-				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] & stInst.I.nImm;
+				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] & nImm;
 				break;
 			}
 			CASE_UNDEFINED();
@@ -253,7 +253,12 @@ private:
 
 	void doBranch(CmdFormat stInst, uint32 nPC)
 	{
-		int32 nImm = stInst.S.nImm0 + (stInst.S.nImm1 << 5);
+//		int32 nImm = stInst.S.nImm0 + (stInst.S.nImm1 << 5);
+		uint32 nImm = stInst.S.nImm0 & 0x1E; // 4:1
+		nImm |= (stInst.S.nImm0 & 0x1) << 11; // 11
+		nImm |= (stInst.S.nImm1 & 0x3F) << 5; // 10:5
+		nImm |= (stInst.S.nImm1 & 0x40) << 12; // 12
+
 		if (nImm & 0x800)
 		{
 			nImm = (uint32)nImm | 0xFFFFF000;
@@ -262,32 +267,32 @@ private:
 		{
 			case 0b000:	// BEQ
 			{
-				if (maRegs[stInst.S.nRs1] == maRegs[stInst.S.nRs2]) mnPC = nPC + nImm;
+				if (maRegs[stInst.S.nRs1] == maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b001:	// BNE
 			{
-				if (maRegs[stInst.S.nRs1] != maRegs[stInst.S.nRs2]) mnPC = nPC + nImm;
+				if (maRegs[stInst.S.nRs1] != maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b100:	// BLT
 			{
-				if ((int32)maRegs[stInst.S.nRs1] < (int32)maRegs[stInst.S.nRs2]) mnPC = nPC + nImm;
+				if ((int32)maRegs[stInst.S.nRs1] < (int32)maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b101:	// BGE
 			{
-				if ((int32)maRegs[stInst.S.nRs1] >= (int32)maRegs[stInst.S.nRs2]) mnPC = nPC + nImm;
+				if ((int32)maRegs[stInst.S.nRs1] >= (int32)maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
-			case 0b110:	// BLTU
+			case 0b110:	// BLTU : Less than.
 			{
-				if (maRegs[stInst.S.nRs1] >= maRegs[stInst.S.nRs2]) mnPC = nPC + nImm;
+				if (maRegs[stInst.S.nRs1] < maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
-			case 0b111:	// BGEU
+			case 0b111:	// BGEU : Bigger or Equal Unsigned.
 			{
-				if (maRegs[stInst.S.nRs1] >= maRegs[stInst.S.nRs2]) mnPC = nPC + nImm;
+				if (maRegs[stInst.S.nRs1] >= maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			CASE_UNDEFINED();
@@ -401,16 +406,28 @@ private:
 			}
 			CASE_UNDEFINED();
 		}
+		maRegs[stInst.R.nRd] = 0;
 	}
 
 	void doSystem(CmdFormat stInst)
 	{
 		switch (stInst.I.nFun)
 		{
-			case 0b000: // ECALL
+			case 0b000: // ECALL, EBREAK,
 			{
-				if (0 == stInst.I.nImm) {}	// ECALL
-				else {} // EBREAK
+				if (0 == stInst.I.nImm) // ECALL
+				{
+					if (0x2A == maRegs[GP_A0]) // 42
+					{
+						printf("\n\tSuccess\n\n");
+						exit(0);
+					}
+					printf("\t\tFAIL with %d\n", maRegs[GP_GP]);
+					ASSERT(false);
+				}	
+				else  // EBREAK
+				{
+				}
 				break;
 			}
 			case 0b001:	// CSRRW: SWAP CSR value.
@@ -481,7 +498,8 @@ public:
 	void Init(uint32 nStart)
 	{
 		mnCntMem = 0;
-		maRegs[0] = 0;
+		memset(maRegs, 0, sizeof(maRegs));
+
 		mnPC = nStart;
 		maCSR[mcycle] = 0;
 	}
@@ -550,7 +568,13 @@ public:
 				}
 				case 0b0000011:	// LB, LH, LW, LBU, LHU
 				{
-					uint32 nSrcAddr = maRegs[stInst.I.nRs1] + stInst.I.nImm;
+					uint32 nImm = stInst.I.nImm;
+					if (0x800 & nImm)
+					{
+						nImm |= 0xFFFFF000;
+					}
+					uint32 nSrcAddr = maRegs[stInst.I.nRs1] + (int32)nImm;
+					
 					switch (stInst.I.nFun)
 					{
 						case 0b000:	// LB
@@ -625,7 +649,7 @@ public:
 				}
 				case 0b0101111: // LR.W, SC.W, AMO{SWAP, ADD, XOR, AND, OR, MIN, MAX, MINU, MAXU}.W
 				{
-					ASSERT(0b101 == stInst.R.nFun);
+					ASSERT(0b010 == stInst.R.nFun);
 					doAtomic(stInst);
 					break;
 				}
@@ -652,6 +676,7 @@ public:
 				CASE_UNDEFINED();
 			}
 		}
+		maRegs[0] = 0;
 
 		if (MR_OK != eMR) // Memory fault.
 		{
@@ -660,7 +685,7 @@ public:
 	}
 };
 
-#define BIN_BASE	0x80000000
+#define BIN_BASE	0x00
 
 int main(int argc, char* argv[])
 {
@@ -668,7 +693,20 @@ int main(int argc, char* argv[])
 	uint32 nMemSize = 0;
 	stCore.Init(BIN_BASE);
 
-	FILE* fpBin = fopen("baremetal.bin", "rb");
+	/*
+	* beq_bne_loop.bin
+	* bltu.bin
+	* lb_sb.in
+	* lh_sh.bin
+	* lw_sw_offset.bin
+	* memory.bin
+	* 
+	*/
+
+	FILE* fpBin = fopen(argv[1], "rb");
+//	FILE* fpBin = fopen("../test/beq_bne_loop.bin", "rb");
+//	FILE* fpBin = fopen("../test/memory.bin", "rb");
+
 	fseek(fpBin, 0, SEEK_END);
 	uint32 nBinSize = ftell(fpBin);
 	nMemSize = nBinSize + 0x10000;

@@ -33,3 +33,6 @@
 build/x64/
 .vs/
 x64/
+*.bin
+*.elf
+*.lst
