@@ -132,7 +132,7 @@ private:
 				{
 					maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] >> maRegs[stInst.R.nRs2];
 				}
-				else if(0b0100000 == stInst.R.nFunExt)// SRA : Shift Right Arithmatic(ºÎÈ£ ºñÆ®¸¦ »ì¸®¸é¼­)
+				else if(0b0100000 == stInst.R.nFunExt)// SRA : Shift Right Arithmatic(ë¶€í˜¸ ë¹„íŠ¸ë¥¼ ì‚´ë¦¬ë©´ì„œ)
 				{
 					maRegs[stInst.R.nRd] = (int32)maRegs[stInst.R.nRs1] >> (int32)maRegs[stInst.R.nRs2];
 				}
@@ -253,7 +253,6 @@ private:
 
 	void doBranch(CmdFormat stInst, uint32 nPC)
 	{
-//		int32 nImm = stInst.S.nImm0 + (stInst.S.nImm1 << 5);
 		uint32 nImm = stInst.S.nImm0 & 0x1E; // 4:1
 		nImm |= (stInst.S.nImm0 & 0x1) << 11; // 11
 		nImm |= (stInst.S.nImm1 & 0x3F) << 5; // 10:5
@@ -301,14 +300,14 @@ private:
 
 	/**
 	* A extention.
-	* ºÎ°¡ ¼³¸í.
-	* Load Reserved´Â load¿Í µ¿ÀÏÇÑµ¥, reservationÀ» µî·ÏÇÑ´Ù´Â Á¡ÀÌ ÀÖ°í, 
-	* Store ConditionalÀº reservedµÈ memory°¡ ´Ù¸¥ ¸í·É¿¡ ÀÇÇØ¼­ updateµÇ¾ú´Ù¸é, updata°¡ ½ÇÆÐÇÑ´Ù.
-	* ½ÇÁ¦ ±¸ÇöÀº tagµîÀ» °É¾î³õ¾Æ¼­ updateµÇÁö ¾Ê¾ÒÀ½À» º¸ÁõÇÏ°Ô µÉÅÙµ¥, 
-	* resourceÁ¦¾à µîÀ¸·Î, memoryÀüÃ¼¿¡ ´ëÇØ¼­ 1°³¸¸ taggingÀ» ÇÏ°Å³ª, 
-	* memory ¿µ¿ªÀ» ³ª´©¾î¼­ ¿µ¿ªº° taggingÀ» ÇÏ´Â ¹æ½ÄÀ» ¾²±âµµ ÇÑ´Ù. 
+	* ë¶€ê°€ ì„¤ëª….
+	* Load ReservedëŠ” loadì™€ ë™ì¼í•œë°, reservationì„ ë“±ë¡í•œë‹¤ëŠ” ì ì´ ìžˆê³ , 
+	* Store Conditionalì€ reservedëœ memoryê°€ ë‹¤ë¥¸ ëª…ë ¹ì— ì˜í•´ì„œ updateë˜ì—ˆë‹¤ë©´, updataê°€ ì‹¤íŒ¨í•œë‹¤.
+	* ì‹¤ì œ êµ¬í˜„ì€ tagë“±ì„ ê±¸ì–´ë†“ì•„ì„œ updateë˜ì§€ ì•Šì•˜ìŒì„ ë³´ì¦í•˜ê²Œ ë í…ë°, 
+	* resourceì œì•½ ë“±ìœ¼ë¡œ, memoryì „ì²´ì— ëŒ€í•´ì„œ 1ê°œë§Œ taggingì„ í•˜ê±°ë‚˜, 
+	* memory ì˜ì—­ì„ ë‚˜ëˆ„ì–´ì„œ ì˜ì—­ë³„ taggingì„ í•˜ëŠ” ë°©ì‹ì„ ì“°ê¸°ë„ í•œë‹¤. 
 	* 
-	* ÀÌ °³³äÀº multi coreÈ¯°æ¿¡¼­ ÀÇ¹ÌÀÖ´Â °ÍÀ¸·Î, single core¿¡¼­´Â ¹«½Ã °¡´ÉÇÑµí..
+	* ì´ ê°œë…ì€ multi coreí™˜ê²½ì—ì„œ ì˜ë¯¸ìžˆëŠ” ê²ƒìœ¼ë¡œ, single coreì—ì„œëŠ” ë¬´ì‹œ ê°€ëŠ¥í•œë“¯..
 	*/
 	void doAtomic(CmdFormat stInst)
 	{
@@ -629,7 +628,7 @@ public:
 					{
 						nImm20 |= 0xFFF00000;
 					}
-					mnPC = nPC + (int32)(nImm20 * 2);	// ÁÖ¼Ò´Â 2B aligned.
+					mnPC = nPC + (int32)(nImm20 * 2);	// ì£¼ì†ŒëŠ” 2B aligned.
 					break;
 				}
 				case 0b1100111:	// JALR.

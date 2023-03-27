@@ -34,7 +34,7 @@ union CmdFormat
 		uint32 nImm1 : 7;
 	} S;	///> Store
 	struct
-	{ // B instructionÀÇ ImmÀÌ º¹ÀâÇÑ ÀÌÀ¯´Â, signÀ» MSB¿¡ µÎ°í, »ç¿ëÇÏÁö ¾Ê´Â bit0 ÀÚ¸®¸¦ È°¿ëÇÏ±â À§ÇÔ.
+	{ // B instructionì˜ Immì´ ë³µì¡í•œ ì´ìœ ëŠ”, signì„ MSBì— ë‘ê³ , ì‚¬ìš©í•˜ì§€ ì•ŠëŠ” bit0 ìë¦¬ë¥¼ í™œìš©í•˜ê¸° ìœ„í•¨.
 		uint32 nOpc : 7;
 		uint32 nImm2 : 1;
 		uint32 nImm0 : 4;
@@ -108,7 +108,7 @@ enum CsrId
 	mstatush = 0x310,		///< status 2.
 
 	mcountinhibit = 0x320,
-	mhpmevent3 = 0x323,	// ¿¬¼Ó.
+	mhpmevent3 = 0x323,	// ì—°ì†.
 	mhpmevent31 = 0x33F,
 
 	mscratch = 0x340,
@@ -119,9 +119,9 @@ enum CsrId
 	mtinst = 0x34A,
 	mtval2,
 
-	pmpcfg = 0x3A0,		// ¿¬¼Ó.
+	pmpcfg = 0x3A0,		// ì—°ì†.
 	pmpcfg_15 = 0x3AF,
-	pmpaddr = 0x3B0,	// ¿¬¼Ó.
+	pmpaddr = 0x3B0,	// ì—°ì†.
 	pmpaddr_63 = 0x3EF,
 
 	tselect = 0x7A0,
@@ -136,7 +136,7 @@ enum CsrId
 
 	mcycle = 0xB00,
 	minstret = 0xB02,
-	mhpmcount3 = 0xB03, // ¿¬¼Ó.
+	mhpmcount3 = 0xB03, // ì—°ì†.
 	mhpmcount31 = 0xB1F,
 
 	NUM_CSR,

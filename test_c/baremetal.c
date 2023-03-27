@@ -2,13 +2,40 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#define BASE_UART	(0x20000000)
+#define BASE_UART		(0x20000000)
+
+#define UART_CFG		(BASE_UART + 0x4)
+#define UART_STATUS		(BASE_UART + 0x4)
+#define UART_RX_BUF		(BASE_UART + 0x8)
+#define UART_TX_BUF		(BASE_UART + 0xC)
+
+#define UART_RX_RDY		(1 << 0)
+#define UART_TX_BUSY	(1 << 1)
+
+char uart_rx()
+{
+	while(1)
+	{
+		if((*(unsigned int*)UART_STATUS) & UART_RX_RDY)
+		{
+			break;
+		}		
+	}
+	return (char)*((char*)UART_RX_BUF);
+}
+
+void uart_tx(char nCh)
+{
+	while((*(unsigned int*)UART_STATUS) & UART_TX_BUSY);
+	*((char*)UART_TX_BUF) = nCh;
+}
+
 
 static void print(char* szString)
 {
 	while(*szString)
 	{
-		*((unsigned char*)(BASE_UART + 4)) = *szString;
+		uart_tx(*szString);
 		szString++;
 	}
 }
@@ -18,23 +45,17 @@ static void init_uart()
 	*((unsigned int*)(BASE_UART)) = 1;
 }
 
-
-static unsigned int getkey()
-{
-	return *((unsigned int*)(BASE_UART + 4));
-}
-
 void get_line(char* pBuf)
 {
 	while(1)
 	{
-		unsigned int nIn = getkey();
+		char nIn = uart_rx();
 		if(('\r' == nIn) || ('\n' == nIn))
 		{
 			*pBuf = 0;
 			break;
 		}
-		else if(nIn < 0xFF)
+		else
 		{
 			*pBuf = nIn;
 			pBuf++;
