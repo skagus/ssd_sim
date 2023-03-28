@@ -24,9 +24,16 @@ char uart_rx()
 	return (char)*((char*)UART_RX_BUF);
 }
 
-void uart_tx(char nCh)
+volatile void uart_tx(char nCh)
 {
-	while((*(unsigned int*)UART_STATUS) & UART_TX_BUSY);
+	while(1)
+	{
+		if( 0 == ((*(unsigned int*)UART_STATUS) & UART_TX_BUSY))
+		{
+			break;
+		}
+		asm volatile("wfi");
+	}
 	*((char*)UART_TX_BUF) = nCh;
 }
 
@@ -95,9 +102,37 @@ static inline uint32_t get_cyc_count() {
 	return ccount;
 }
 
+volatile uint32_t gnTemp;
+volatile uint32_t gnTemp2;
+__attribute__((interrupt("machine"))) void DummyISR(void)
+{
+	uint32_t nTmp = gnTemp + gnTemp2 + 1;
+	gnTemp = nTmp;
+	return;
+}
+
+void (*gaISR[])() =
+{
+	DummyISR,
+	DummyISR,
+	DummyISR,
+};
+
+void init_vectable()
+{
+	register int pnVector;
+	asm volatile ("la %[vec], %[sym]\n\t" :[vec]"=r"(pnVector):[sym]"i"(gaISR));
+//	asm volatile ("ori %[dst], %[vec], 3\n\t" :[dst]"=r"(pnVector) : [vec]"r"(pnVector));
+	asm volatile ("csrw mtvec, %[vec]\n\t" ::[vec]"r"(pnVector));
+
+//	asm volatile (".insn r 0x33, 0, 0, %[res], %[res], %[ptr]":[res]"+r"(result) : [ptr]"r"(ptr));
+}
+
+
 int main()
 {
 	init_uart();
+	init_vectable();
 	print("Test String\n");
 	
 	char aBuf[30];

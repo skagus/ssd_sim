@@ -6,7 +6,7 @@
 
 #define INC_PC()			(mnPC += 4)
 #define UN_SUPPORTED()		assert(false)
-#define CASE_UNDEFINED()	default:{UN_SUPPORTED();break;}
+#define UNDEF_INST(nAddr)	Exception(TRAP_DECODE, nAddr)
 
 class RV32Core: public CpuCore
 {
@@ -18,7 +18,10 @@ private:
 	uint8 mnCntMem;
 	Memory* maChunk[MAX_MEM_CHUNK];
 
-	uint32 mnTagedAddr;	///< Tag for atommic.
+	uint32 mbmTrap;	///< Trap information. @see TrapId
+	uint32 maTrapParam[NUM_TRAP];
+
+	bool mbWFI;		///< true if WFI.
 
 	template <typename T>
 	MemRet load(uint32 nAddr, T* pnVal)
@@ -50,7 +53,7 @@ private:
 		return MR_OUT_RANGE;
 	}
 
-	void doArith(CmdFormat stInst)
+	void doArith(CmdFormat stInst, uint32 nPC)
 	{
 		switch (stInst.R.nFun)
 		{
@@ -188,11 +191,11 @@ private:
 				}
 				break;
 			}
-			CASE_UNDEFINED();
+			
 		}
 	}
 
-	void doArithImm(CmdFormat stInst)
+	void doArithImm(CmdFormat stInst, uint32 nPC)
 	{
 		uint32 nImm = stInst.I.nImm;
 		if (nImm & 0x800) nImm |= 0xFFFFF000;
@@ -247,7 +250,7 @@ private:
 				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] & nImm;
 				break;
 			}
-			CASE_UNDEFINED();
+			UNDEF_INST(nPC);
 		}
 	}
 
@@ -294,7 +297,7 @@ private:
 				if (maRegs[stInst.S.nRs1] >= maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
-			CASE_UNDEFINED();
+			UNDEF_INST(nPC);
 		}
 	}
 
@@ -309,7 +312,7 @@ private:
 	* 
 	* 이 개념은 multi core환경에서 의미있는 것으로, single core에서는 무시 가능한듯..
 	*/
-	void doAtomic(CmdFormat stInst)
+	void doAtomic(CmdFormat stInst, uint32 nPC)
 	{
 		uint32 nVal;
 		uint32 nAddrS1 = maRegs[stInst.R.nRs1];
@@ -403,18 +406,21 @@ private:
 				store(nAddrS1, maRegs[stInst.R.nRd]);
 				break;
 			}
-			CASE_UNDEFINED();
+			UNDEF_INST(nPC);
 		}
 		maRegs[stInst.R.nRd] = 0;
 	}
 
-	void doSystem(CmdFormat stInst)
+	void doSystem(CmdFormat stInst, uint32 nPC) // 0b1110011
 	{
+		// 0x30200073
+		// 0b0011_0000_0010_.0000_0.000_.0000_0.111_0011
+		//   Imm             Rs1    nFun nRd    nOp.
 		switch (stInst.I.nFun)
 		{
 			case 0b000: // ECALL, EBREAK,
 			{
-				if (0 == stInst.I.nImm) // ECALL
+				if (0x000 == stInst.I.nImm) // ECALL
 				{
 					if (0x2A == maRegs[GP_A0]) // 42
 					{
@@ -424,8 +430,18 @@ private:
 					printf("\t\tFAIL with %d\n", maRegs[GP_GP]);
 					ASSERT(false);
 				}	
-				else  // EBREAK
+				else if (0x001 == stInst.I.nImm) {} // EBREAK
+				else if (0x002 == stInst.I.nImm) {} // URET.
+				else if (0x102 == stInst.I.nImm) {} // SRET.
+				else if (0x202 == stInst.I.nImm) {} // HRET.
+				else if (0x302 == stInst.I.nImm) // MRET.
 				{
+					mnPC = maCSR[mepc];
+					maCSR[mcause] = 0;
+				}
+				else if (0x105 == stInst.I.nImm) // WFI
+				{
+					mbWFI = true;
 				}
 				break;
 			}
@@ -489,8 +505,34 @@ private:
 				maCSR[stInst.I.nImm] &= ~stInst.I.nRs1;
 				break;
 			}
-			CASE_UNDEFINED();
+			UNDEF_INST(nPC);
 		}
+	}
+
+	/**
+	* @return true if continue, false on WFI.
+	*/
+	bool handleException()
+	{
+		if (mbmTrap != 0)
+		{
+			// capture the interrupted pc into a CSR — called mepc
+			maCSR[mepc] = mnPC;
+			// capture the current privilege level into a CSR
+			// set the interrupt cause CSR — called mcause
+			maCSR[mcause] = 1;
+			// if the exception was due to a page fault then mtval holds the fault address
+			// turn off interrupts — mie
+			maCSR[mstatus] &= ~BIT(MSTATUS_MIE);
+			// look up the interrupt handler in the vector table specified by a CSR — called mtvec
+			uint32 nVAddr = maCSR[mtvec] + (4 * maTrapParam[TRAP_IRQ]);
+			load(nVAddr, &mnPC);
+			// and transfer control(set the pc) to the ISR
+
+			mbmTrap = 0;
+			mbWFI = false;
+		}
+		return mbWFI;
 	}
 
 public:
@@ -498,7 +540,8 @@ public:
 	{
 		mnCntMem = 0;
 		memset(maRegs, 0, sizeof(maRegs));
-
+		mbmTrap = 0;
+		mbWFI = false;
 		mnPC = nStart;
 		maCSR[mcycle] = 0;
 	}
@@ -509,16 +552,38 @@ public:
 		mnCntMem++;
 	}
 
-	void Step()
+	void Exception(uint32 nType, uint32 nParam)
 	{
+		// TODO: WFI는 Enabled ISR에서만 깨어나는 건지.. 아니면, disable에서도 가능한지..
+		TrapType eType = (TrapType)nType;
+		if ((TRAP_IRQ == eType) && (maCSR[mstatus] & MSTATUS_MIE))
+		{
+			mbmTrap |= BIT(nType);
+			maTrapParam[eType] = nParam;
+		}
+		else if ((TRAP_DECODE == eType) || (TRAP_BUS == eType))
+		{
+			mbmTrap |= BIT(nType);
+			maTrapParam[eType] = nParam;
+		}
+	}
+
+	bool Step()
+	{
+		if (handleException())
+		{
+			return true;
+		}
+
 		CmdFormat stInst;
+
 		MemRet eMR = load(mnPC, &stInst.nRaw);
 		maCSR[mcycle]++;
 		if (MR_OK == eMR)
 		{
 			uint32 nPC = mnPC;
 			INC_PC();
-//			printf("0x%08X: %8X \n", nPC, stInst.nRaw);
+			printf("0x%08X: %8X \n", nPC, stInst.nRaw);
 
 			switch (stInst.B.nOpc)
 			{
@@ -529,12 +594,12 @@ public:
 				}
 				case 0b0110011:	// ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND
 				{
-					doArith(stInst);
+					doArith(stInst, nPC);
 					break;
 				}
 				case 0b0010011:	// ADDI, SLLI, SRLI, SRAI, SLTI, SLTIU, XORI, ORI, ANDI.
 				{
-					doArithImm(stInst);
+					doArithImm(stInst, nPC);
 					break;
 				}
 				case 0b0100011: // Store.
@@ -560,7 +625,7 @@ public:
 							eMR = store(nAddr, (uint32)nVal);
 							break;
 						}
-						CASE_UNDEFINED();
+						UNDEF_INST(nPC);
 					}
 					break;
 				}
@@ -610,7 +675,7 @@ public:
 							maRegs[stInst.I.nRd] = nRead;
 							break;
 						}
-						CASE_UNDEFINED();
+						UNDEF_INST(nPC);
 					}
 					break;
 				}
@@ -648,7 +713,7 @@ public:
 				case 0b0101111: // LR.W, SC.W, AMO{SWAP, ADD, XOR, AND, OR, MIN, MAX, MINU, MAXU}.W
 				{
 					ASSERT(0b010 == stInst.R.nFun);
-					doAtomic(stInst);
+					doAtomic(stInst, nPC);
 					break;
 				}
 				case 0b0001111:	// FENCE, FENCE.I
@@ -661,17 +726,17 @@ public:
 							// NOTHING TODO.
 							break;
 						}
-						CASE_UNDEFINED();
+						UNDEF_INST(nPC);
 					}
 					break;
 				}
-				case 0b1110011: // ECALL, EBREAK, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI
+				case 0b1110011: // ECALL, EBREAK, WFI, MRET, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI
 				{
-					doSystem(stInst);
+					doSystem(stInst, nPC);
 					break;
 				}
 
-				CASE_UNDEFINED();
+				UNDEF_INST(nPC);
 			}
 		}
 		maRegs[0] = 0;
@@ -680,6 +745,7 @@ public:
 		{
 			// Memory failure.
 		}
+		return false;
 	}
 };
 

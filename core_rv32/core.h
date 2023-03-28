@@ -104,7 +104,8 @@ class CpuCore
 public:
 	virtual void Init(uint32 nStart) = 0;
 	virtual void AddMemory(Memory* pMem) = 0;
-	virtual void Step() = 0;
+	virtual bool Step() = 0;
+	virtual void Exception(uint32 nType, uint32 nId) = 0;
 };
 
 CpuCore* CreateCore();

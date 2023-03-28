@@ -5,62 +5,15 @@
 #define RET_SLEEP		FF32
 #define MAX_MEM_CHUNK	(3)	// 
 
-union CmdFormat
-{
-	struct
-	{
-		uint32 nOpc : 7;
-		uint32 nRd : 5;
-		uint32 nFun : 3;
-		uint32 nRs1 : 5;
-		uint32 nRs2 : 5;
-		uint32 nFunExt : 7;
-	} R;	///< Regiser Register type.
-	struct
-	{
-		uint32 nOpc : 7;
-		uint32 nRd : 5;
-		uint32 nFun : 3;
-		uint32 nRs1 : 5;
-		uint32 nImm : 12;
-	} I;	///< Short Imm and Loads.
-	struct
-	{
-		uint32 nOpc : 7;
-		uint32 nImm0 : 5;
-		uint32 nFun : 3;
-		uint32 nRs1 : 5;
-		uint32 nRs2 : 5;
-		uint32 nImm1 : 7;
-	} S;	///> Store
-	struct
-	{ // B instruction의 Imm이 복잡한 이유는, sign을 MSB에 두고, 사용하지 않는 bit0 자리를 활용하기 위함.
-		uint32 nOpc : 7;
-		uint32 nImm2 : 1;
-		uint32 nImm0 : 4;
-		uint32 nFun : 3;
-		uint32 nRs1 : 5;
-		uint32 nRs2 : 5;
-		uint32 nImm1 : 6;
-		uint32 nImm3 : 1;
-	} B;	///< Branch and variation of S-type.
-	struct
-	{
-		uint32 nOpc : 7;
-		uint32 nRd : 5;
-		uint32 nImm : 20;
-	} U;	///< Long Immediage.
-	struct
-	{
-		uint32 nOpc : 7;
-		uint32 nRd : 5;
-		uint32 nImm2 : 8;
-		uint32 nImm1 : 1;
-		uint32 nImm0 : 10;
-		uint32 nImm3 : 1;
-	} J;	///< Jump and variation of U type.
+#define MSTATUS_MIE		(0)
 
-	uint32 nRaw;
+enum TrapType
+{
+	TRAP_IRQ,
+	TRAP_BUS,
+	TRAP_DBG,
+	TRAP_DECODE,
+	NUM_TRAP,
 };
 
 enum GpId
@@ -142,3 +95,61 @@ enum CsrId
 	NUM_CSR,
 };
 
+
+union CmdFormat
+{
+	struct
+	{
+		uint32 nOpc : 7;
+		uint32 nRd : 5;
+		uint32 nFun : 3;
+		uint32 nRs1 : 5;
+		uint32 nRs2 : 5;
+		uint32 nFunExt : 7;
+	} R;	///< Regiser Register type.
+	struct
+	{
+		uint32 nOpc : 7;
+		uint32 nRd : 5;
+		uint32 nFun : 3;
+		uint32 nRs1 : 5;
+		uint32 nImm : 12;
+	} I;	///< Short Imm and Loads.
+	struct
+	{
+		uint32 nOpc : 7;
+		uint32 nImm0 : 5;
+		uint32 nFun : 3;
+		uint32 nRs1 : 5;
+		uint32 nRs2 : 5;
+		uint32 nImm1 : 7;
+	} S;	///> Store
+	struct
+	{ // B instruction의 Imm이 복잡한 이유는, sign을 MSB에 두고, 사용하지 않는 bit0 자리를 활용하기 위함.
+		uint32 nOpc : 7;
+		uint32 nImm2 : 1;
+		uint32 nImm0 : 4;
+		uint32 nFun : 3;
+		uint32 nRs1 : 5;
+		uint32 nRs2 : 5;
+		uint32 nImm1 : 6;
+		uint32 nImm3 : 1;
+	} B;	///< Branch and variation of S-type.
+	struct
+	{
+		uint32 nOpc : 7;
+		uint32 nRd : 5;
+		uint32 nImm : 20;
+	} U;	///< Long Immediage.
+	struct
+	{
+		uint32 nOpc : 7;
+		uint32 nRd : 5;
+		uint32 nImm2 : 8;
+		uint32 nImm1 : 1;
+		uint32 nImm0 : 10;
+		uint32 nImm3 : 1;
+	} J;	///< Jump and variation of U type.
+
+	uint32 nRaw;
+};

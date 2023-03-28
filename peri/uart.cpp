@@ -34,6 +34,7 @@ public:
 		mnRxBuf = FF32;
 		mnTxBuf = FF32;
 		mnStatus = 0;
+		mnControl = 0;
 	}
 
 	void handle()
@@ -60,7 +61,6 @@ public:
 		}
 
 		MemRet eRet = MR_ERROR;
-		handle();
 		switch (nAddr - mnBase)
 		{
 			case UART_STATE_OFF:
@@ -74,6 +74,7 @@ public:
 				ASSERT(false);
 			}
 		}
+		handle();
 		return eRet;
 	}
 
@@ -85,7 +86,7 @@ public:
 		}
 
 		MemRet eRet = MR_ERROR;
-		handle();
+//		handle();
 
 		switch (nAddr - mnBase)
 		{
