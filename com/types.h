@@ -5,6 +5,7 @@
 /**
 기본 Type정의.
 */
+#define FF64			0xFFFFFFFFFFFFFFFF
 #define FF32			0xFFFFFFFF
 #define FF16			0xFFFF
 #define FF08			0xFF

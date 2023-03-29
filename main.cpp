@@ -3,12 +3,16 @@
 #include <stdlib.h>
 #include "core.h"
 #include "uart.h"
+#include "sim.h"
 
 #define BASE_SRAM	(0x80000000)
 #define BASE_UART	(0x20000000)
 
 int main(int argc, char* argv[])
 {
+#if 1
+	SIM_Run();
+#else
 	CpuCore* pstCore = CreateCore();
 	uint32 nMemSize = 0;
 	pstCore->Init(BASE_SRAM);
@@ -34,7 +38,7 @@ int main(int argc, char* argv[])
 	uint8* pCodeMem = (uint8*)malloc(nMemSize);
 	fread(pCodeMem, 1, nBinSize, fpBin);
 	fclose(fpBin);
-	
+
 	SRAM* pSRAM = new SRAM(BASE_SRAM, nMemSize, pCodeMem);
 	pstCore->AddMemory(pSRAM);
 
@@ -45,4 +49,5 @@ int main(int argc, char* argv[])
 	{
 		pstCore->Step();
 	}
+#endif
 }

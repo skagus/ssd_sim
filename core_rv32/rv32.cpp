@@ -436,11 +436,15 @@ private:
 				else if (0x202 == stInst.I.nImm) {} // HRET.
 				else if (0x302 == stInst.I.nImm) // MRET.
 				{
+					printf("MRET\n");
 					mnPC = maCSR[mepc];
 					maCSR[mcause] = 0;
+					maCSR[mstatus] |= BIT(MSTATUS_MIE);
 				}
 				else if (0x105 == stInst.I.nImm) // WFI
 				{
+					printf("WFI\n");
+					maCSR[mstatus] |= BIT(MSTATUS_MIE);
 					mbWFI = true;
 				}
 				break;
@@ -516,21 +520,24 @@ private:
 	{
 		if (mbmTrap != 0)
 		{
-			// capture the interrupted pc into a CSR — called mepc
-			maCSR[mepc] = mnPC;
-			// capture the current privilege level into a CSR
-			// set the interrupt cause CSR — called mcause
-			maCSR[mcause] = 1;
-			// if the exception was due to a page fault then mtval holds the fault address
-			// turn off interrupts — mie
-			maCSR[mstatus] &= ~BIT(MSTATUS_MIE);
-			// look up the interrupt handler in the vector table specified by a CSR — called mtvec
-			uint32 nVAddr = maCSR[mtvec] + (4 * maTrapParam[TRAP_IRQ]);
-			load(nVAddr, &mnPC);
-			// and transfer control(set the pc) to the ISR
+			if (maCSR[mstatus] & BIT(MSTATUS_MIE))
+			{
+				// capture the interrupted pc into a CSR — called mepc
+				maCSR[mepc] = mnPC;
+				// capture the current privilege level into a CSR
+				// set the interrupt cause CSR — called mcause
+				maCSR[mcause] = 1;
+				// if the exception was due to a page fault then mtval holds the fault address
+				// turn off interrupts — mie
+				maCSR[mstatus] &= ~BIT(MSTATUS_MIE);
+				// look up the interrupt handler in the vector table specified by a CSR — called mtvec
+				uint32 nVAddr = maCSR[mtvec] + (4 * maTrapParam[TRAP_IRQ]);
+				load(nVAddr, &mnPC);
+				// and transfer control(set the pc) to the ISR
 
-			mbmTrap = 0;
-			mbWFI = false;
+				mbmTrap = 0;
+				mbWFI = false;
+			}
 		}
 		return mbWFI;
 	}
@@ -552,11 +559,11 @@ public:
 		mnCntMem++;
 	}
 
-	void Exception(uint32 nType, uint32 nParam)
+	void Exception(TrapType nType, uint32 nParam)
 	{
 		// TODO: WFI는 Enabled ISR에서만 깨어나는 건지.. 아니면, disable에서도 가능한지..
 		TrapType eType = (TrapType)nType;
-		if ((TRAP_IRQ == eType) && (maCSR[mstatus] & MSTATUS_MIE))
+		if ((TRAP_IRQ == eType) && (maCSR[mstatus] & BIT(MSTATUS_MIE)))
 		{
 			mbmTrap |= BIT(nType);
 			maTrapParam[eType] = nParam;
@@ -583,7 +590,7 @@ public:
 		{
 			uint32 nPC = mnPC;
 			INC_PC();
-			printf("0x%08X: %8X \n", nPC, stInst.nRaw);
+//			printf("0x%08X: %8X \n", nPC, stInst.nRaw);
 
 			switch (stInst.B.nOpc)
 			{

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <intrin.h>
+#include <stdio.h>
 #include "types.h"
 
 //// 기본 macro 정의 ////
@@ -15,11 +16,10 @@
 #endif
 
 //extern void SIM_Print(const char* szFormat, ...);
-#define SIM_Print(...)				printf(__VA_ARGS__)
 
 #define NOT(x)						(!(x))
 #define BRK_IF(bCond, bPrint)		do{ if (bCond){								\
-									if(bPrint){SIM_Print("BRK: %s(%d) %s\n", __FILE__, __LINE__, #bCond);} \
+									if(bPrint){printf("BRK: %s(%d) %s\n", __FILE__, __LINE__, #bCond);} \
 									__debugbreak(); }}while(0)
 #define ASSERT(bCond)				BRK_IF(NOT(bCond), true)
 #define IF_THEN(bCond, bAssert)		ASSERT(NOT(bCond) || (bAssert))

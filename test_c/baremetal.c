@@ -19,7 +19,8 @@ char uart_rx()
 		if((*(unsigned int*)UART_STATUS) & UART_RX_RDY)
 		{
 			break;
-		}		
+		}
+		asm volatile("wfi");
 	}
 	return (char)*((char*)UART_RX_BUF);
 }
@@ -139,6 +140,7 @@ int main()
 	get_line(aBuf);
 	print(aBuf);
 	
+	print("End get line\n");
 	lprint("\n");
 	lprint("Hello world from RV32 land.\n");
 	lprint("main is at: ");

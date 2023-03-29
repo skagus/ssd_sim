@@ -5,16 +5,8 @@
 #define RET_SLEEP		FF32
 #define MAX_MEM_CHUNK	(3)	// 
 
-#define MSTATUS_MIE		(0)
+#define MSTATUS_MIE		(0)		// maybe with BIT
 
-enum TrapType
-{
-	TRAP_IRQ,
-	TRAP_BUS,
-	TRAP_DBG,
-	TRAP_DECODE,
-	NUM_TRAP,
-};
 
 enum GpId
 {

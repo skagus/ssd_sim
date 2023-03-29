@@ -10,6 +10,9 @@
     <Filter Include="peri">
       <UniqueIdentifier>{bf8a30ae-391b-4b8c-8447-9efaa5bbb924}</UniqueIdentifier>
     </Filter>
+    <Filter Include="engine">
+      <UniqueIdentifier>{efcec48b-4c73-45da-9836-88564e261773}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\com\macro.h">
@@ -30,6 +33,15 @@
     <ClInclude Include="..\peri\uart.h">
       <Filter>peri</Filter>
     </ClInclude>
+    <ClInclude Include="..\engine\sim.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\engine\sim_conf.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\engine\sim_hw.h">
+      <Filter>engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\core_rv32\rv32.cpp">
@@ -39,5 +51,8 @@
       <Filter>peri</Filter>
     </ClCompile>
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\engine\sim.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -24,10 +24,14 @@
     <ClInclude Include="..\com\types.h" />
     <ClInclude Include="..\core_rv32\core.h" />
     <ClInclude Include="..\core_rv32\rv32.h" />
+    <ClInclude Include="..\engine\sim.h" />
+    <ClInclude Include="..\engine\sim_conf.h" />
+    <ClInclude Include="..\engine\sim_hw.h" />
     <ClInclude Include="..\peri\uart.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\core_rv32\rv32.cpp" />
+    <ClCompile Include="..\engine\sim.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\peri\uart.cpp" />
   </ItemGroup>
@@ -115,9 +119,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;EN_SIM</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../core_rv32;../peri;../com</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../core_rv32;../peri;../com;../engine</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
