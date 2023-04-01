@@ -168,7 +168,7 @@ void SIM_Run()
 					pEvt = gEvtQue.top();
 					if (pEvt->nTick > gnTick)
 					{
-						if (pCpu->Step()) // CPU wait for Interrupt.
+						if (pCpu->Step()) // CPU wait for handleException.
 						{
 							gnTick = pEvt->nTick;
 							break;

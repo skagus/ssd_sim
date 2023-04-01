@@ -8,7 +8,8 @@
 #define UN_SUPPORTED()		assert(false)
 #define UNDEF_INST(nAddr)	Exception(TRAP_DECODE, nAddr)
 #define XLEN				(32)
-#define PRINT_INST(...)		printf(__VA_ARGS__)
+//#define PRINT_INST(...)		printf(__VA_ARGS__)
+#define PRINT_INST(...)
 #define REGNAME(idx)		(gaRegName[idx])
 const char* gaRegName[]
 {
@@ -57,7 +58,7 @@ private:
 	Memory* maChunk[MAX_MEM_CHUNK];
 
 	uint32 mbmTrap;	///< Trap information. @see TrapId
-	uint32 maTrapParam[NUM_TRAP];
+	uint32 mTrapParam;
 
 	bool mbWFI;		///< true if WFI.
 
@@ -99,17 +100,17 @@ private:
 			{
 				if (0 == stInst.R.nFunExt)  // ADD
 				{
-					PRINT_INST("ADD %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: ADD %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = (int32)maRegs[stInst.R.nRs1] + (int32)maRegs[stInst.R.nRs2];
 				}
 				else if(0b100000 == stInst.R.nFunExt) // SUB
 				{
-					PRINT_INST("SUB %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: SUB %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = (int32)maRegs[stInst.R.nRs1] - (int32)maRegs[stInst.R.nRs2];
 				}
 				else if (0b01 == stInst.R.nFunExt)	// MUL, M-ext
 				{
-					PRINT_INST("MUL %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: MUL %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] * maRegs[stInst.R.nRs2];
 				}
 				break;
@@ -118,12 +119,12 @@ private:
 			{
 				if (0 == stInst.R.nFunExt) // SLL : Shift Left Logical.
 				{
-					PRINT_INST("SLL %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: SLL %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] << maRegs[stInst.R.nRs2];
 				}
 				else if (0b01 == stInst.R.nFunExt) // MULH, M-ext
 				{
-					PRINT_INST("MULH %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: MULH %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = ((int64)(int32)maRegs[stInst.R.nRs1] * (int64)(int32)maRegs[stInst.R.nRs2]) >> XLEN;
 				}
 				break;
@@ -132,12 +133,12 @@ private:
 			{
 				if (0b00 == stInst.R.nFunExt) // SLT : Set Less Than.
 				{
-					PRINT_INST("SLT %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: SLT %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = ((int)maRegs[stInst.R.nRs1] < (int)maRegs[stInst.R.nRs2]) ? 1 : 0;
 				}
 				else if (0b01 == stInst.R.nFunExt) // MULHSU, M-ext
 				{
-					PRINT_INST("MULHSU %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: MULHSU %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = ((int64)(int32)maRegs[stInst.R.nRs1] * (uint64)maRegs[stInst.R.nRs2]) >> XLEN;
 				}
 				break;
@@ -146,12 +147,12 @@ private:
 			{
 				if (0b00 == stInst.R.nFunExt) // SLTU
 				{
-					PRINT_INST("SLTU %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: SLTU %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = (maRegs[stInst.R.nRs1] < maRegs[stInst.R.nRs2]) ? 1 : 0;
 				}
 				else if (0b01 == stInst.R.nFunExt) // MULHU, M-ext
 				{
-					PRINT_INST("MULHU %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: MULHU %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = ((uint64)maRegs[stInst.R.nRs1] * (uint64)maRegs[stInst.R.nRs2]) >> XLEN;
 				}
 				break;
@@ -160,12 +161,12 @@ private:
 			{
 				if (0b00 == stInst.R.nFunExt) // XOR
 				{
-					PRINT_INST("XOR %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: XOR %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] ^ maRegs[stInst.R.nRs2];
 				}
 				else if (0b01 == stInst.R.nFunExt) // DIV, M-ext
 				{
-					PRINT_INST("DIV %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: DIV %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					if (0 != maRegs[stInst.R.nRs2])
 					{
 						maRegs[stInst.R.nRd] = (int32)maRegs[stInst.R.nRs1] / (int32)maRegs[stInst.R.nRs2];
@@ -181,17 +182,17 @@ private:
 			{
 				if (0 == stInst.R.nFunExt)  // SRL : Shift Right Logical.
 				{
-					PRINT_INST("SRL %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: SRL %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] >> maRegs[stInst.R.nRs2];
 				}
 				else if(0b0100000 == stInst.R.nFunExt)// SRA : Shift Right Arithmatic(부호 비트를 살리면서)
 				{
-					PRINT_INST("SRA %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: SRA %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = (int32)maRegs[stInst.R.nRs1] >> (int32)maRegs[stInst.R.nRs2];
 				}
 				else if (0b01 == stInst.R.nFunExt) // DIVU, M-ext
 				{
-					PRINT_INST("DIVU %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: DIVU %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					if (0 != maRegs[stInst.R.nRs2])
 					{
 						maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] / maRegs[stInst.R.nRs2];
@@ -208,12 +209,12 @@ private:
 			{
 				if (0 == stInst.R.nFunExt)  // OR
 				{
-					PRINT_INST("OR %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: OR %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] | maRegs[stInst.R.nRs2];
 				}
 				else if (0b01 == stInst.R.nFunExt) // REM, M-ext
 				{
-					PRINT_INST("REM %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: REM %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					if (0 != maRegs[stInst.R.nRs2])
 					{
 						maRegs[stInst.R.nRd] = (int32)maRegs[stInst.R.nRs1] % (int32)maRegs[stInst.R.nRs2];
@@ -229,12 +230,12 @@ private:
 			{
 				if (0 == stInst.R.nFunExt)  // AND
 				{
-					PRINT_INST("AND %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: AND %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] & maRegs[stInst.R.nRs2];
 				}
 				else if (0b01 == stInst.R.nFunExt) // REMU, M-ext
 				{
-					PRINT_INST("REMU %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+					PRINT_INST("%08X: REMU %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 					if (0 != maRegs[stInst.R.nRs2])
 					{
 						maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs1] % maRegs[stInst.R.nRs2];
@@ -258,14 +259,14 @@ private:
 		{
 			case 0b000: // ADDI.
 			{
-				PRINT_INST("ADDI %s %s %d\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), (int32)nImm);
+				PRINT_INST("%08X: ADDI %s %s %d\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), (int32)nImm);
 				maRegs[stInst.I.nRd] = (int32)maRegs[stInst.I.nRs1] + (int32)nImm;
 				break;
 			}
 			case 0b001:	// SLLI
 			{
 				uint32 nShamt = stInst.R.nRs2;
-				PRINT_INST("SLLI %s %s 0x%X\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nShamt);
+				PRINT_INST("%08X: SLLI %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nShamt);
 				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] << nShamt;
 				break;
 			}
@@ -274,43 +275,43 @@ private:
 				uint32 nShamt = stInst.R.nRs2;
 				if (0 == stInst.R.nFunExt) // SRLI.
 				{
-					PRINT_INST("SRLI %s %s 0x%X\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nShamt);
+					PRINT_INST("%08X: SRLI %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nShamt);
 					maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] >> nShamt;
 				}
 				else // SRAI.
 				{
-					PRINT_INST("SRAI %s %s 0x%X\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nShamt);
+					PRINT_INST("%08X: SRAI %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nShamt);
 					maRegs[stInst.I.nRd] = (int32)maRegs[stInst.I.nRs1] >> nShamt;
 				}
 				break;
 			}
 			case 0b010: // SLTI : Set Less Than Imm.
 			{
-				PRINT_INST("SLTI %s %s %d\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), (int32)nImm);
+				PRINT_INST("%08X: SLTI %s %s %d\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), (int32)nImm);
 				maRegs[stInst.I.nRd] = ((int32)maRegs[stInst.I.nRs1] < (int32)nImm) ? 1 : 0;
 				break;
 			}
 			case 0b011: // SLTIU
 			{
-				PRINT_INST("SLTU %s %s 0x%X\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
+				PRINT_INST("%08X: SLTU %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
 				maRegs[stInst.I.nRd] = (maRegs[stInst.I.nRs1] < nImm) ? 1 : 0;
 				break;
 			}
 			case 0b100:	// XORI
 			{
-				PRINT_INST("XORI %s %s 0x%X\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
+				PRINT_INST("%08X: XORI %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
 				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] ^ nImm;
 				break;
 			}
 			case 0b110:	// ORI
 			{
-				PRINT_INST("ORI %s %s 0x%X\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
+				PRINT_INST("%08X: ORI %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
 				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] | nImm;
 				break;
 			}
 			case 0b111: // ANDI.
 			{
-				PRINT_INST("ANDI %s %s 0x%X\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
+				PRINT_INST("%08X: ANDI %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), nImm);
 				maRegs[stInst.I.nRd] = maRegs[stInst.I.nRs1] & nImm;
 				break;
 			}
@@ -333,37 +334,37 @@ private:
 		{
 			case 0b000:	// BEQ
 			{
-				PRINT_INST("BEQ %s %s 0x%X\n", REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
+				PRINT_INST("%08X: BEQ %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
 				if (maRegs[stInst.S.nRs1] == maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b001:	// BNE
 			{
-				PRINT_INST("BNE %s %s 0x%X\n", REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
+				PRINT_INST("%08X: BNE %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
 				if (maRegs[stInst.S.nRs1] != maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b100:	// BLT
 			{
-				PRINT_INST("BLT %s %s 0x%X\n", REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
+				PRINT_INST("%08X: BLT %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
 				if ((int32)maRegs[stInst.S.nRs1] < (int32)maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b101:	// BGE
 			{
-				PRINT_INST("BGE %s %s 0x%X\n", REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
+				PRINT_INST("%08X: BGE %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
 				if ((int32)maRegs[stInst.S.nRs1] >= (int32)maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b110:	// BLTU : Less than.
 			{
-				PRINT_INST("BLTU %s %s 0x%X\n", REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
+				PRINT_INST("%08X: BLTU %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
 				if (maRegs[stInst.S.nRs1] < maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
 			case 0b111:	// BGEU : Bigger or Equal Unsigned.
 			{
-				PRINT_INST("BGEU %s %s 0x%X\n", REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
+				PRINT_INST("%08X: BGEU %s %s 0x%X\n", nPC, REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2), (int32)nImm);
 				if (maRegs[stInst.S.nRs1] >= maRegs[stInst.S.nRs2]) mnPC = nPC + (int32)nImm;
 				break;
 			}
@@ -393,7 +394,7 @@ private:
 		{
 			case 0b00010:	// LR.W : Load Reserved.
 			{
-				PRINT_INST("LR.W %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1));
+				PRINT_INST("%08X: LR.W %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1));
 				nResevedAddr = nAddrS1;
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = nVal;
@@ -401,7 +402,7 @@ private:
 			}
 			case 0b00011:	// SC.W : Store Conditional.
 			{
-				PRINT_INST("SC.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: SC.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				if (nResevedAddr == nAddrS1) // success.
 				{
 					store(nAddrS1, maRegs[stInst.R.nRs2]);
@@ -416,7 +417,7 @@ private:
 			}
 			case 0b00001:	// SWAP.W
 			{
-				PRINT_INST("SWAP.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: SWAP.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = maRegs[stInst.R.nRs2];
 				maRegs[stInst.R.nRs2] = nVal;
@@ -425,7 +426,7 @@ private:
 			}
 			case 0b00000:	// ADD.W
 			{
-				PRINT_INST("ADD.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: ADD.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = nVal + maRegs[stInst.R.nRs2];
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -433,7 +434,7 @@ private:
 			}
 			case 0b00100:	// XOR.W
 			{
-				PRINT_INST("XOR.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: XOR.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = nVal ^ maRegs[stInst.R.nRs2];
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -441,7 +442,7 @@ private:
 			}
 			case 0b01100:	// AND.W
 			{
-				PRINT_INST("AND.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: AND.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = nVal & maRegs[stInst.R.nRs2];
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -449,7 +450,7 @@ private:
 			}
 			case 0b01000:	// OR.W
 			{
-				PRINT_INST("OR.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: OR.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = nVal | maRegs[stInst.R.nRs2];
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -457,7 +458,7 @@ private:
 			}
 			case 0b10000:	// MIN.W
 			{
-				PRINT_INST("MIN.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: MIN.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = MIN((int32)nVal, (int32)maRegs[stInst.R.nRs2]);
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -465,7 +466,7 @@ private:
 			}
 			case 0b10100:	// MAX.W
 			{
-				PRINT_INST("MAX.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: MAX.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = MAX((int32)nVal, (int32)maRegs[stInst.R.nRs2]);
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -473,7 +474,7 @@ private:
 			}
 			case 0b11000:	// MINU.W
 			{
-				PRINT_INST("MINU.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: MINU.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = MIN(nVal, maRegs[stInst.R.nRs2]);
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -481,7 +482,7 @@ private:
 			}
 			case 0b11100:	// MAXU.W
 			{
-				PRINT_INST("MAXU.W %s %s %s\n", REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
+				PRINT_INST("%08X: MAXU.W %s %s %s\n", nPC, REGNAME(stInst.R.nRd), REGNAME(stInst.R.nRs1), REGNAME(stInst.R.nRs2));
 				load(nAddrS1, &nVal);
 				maRegs[stInst.R.nRd] = MAX(nVal, maRegs[stInst.R.nRs2]);
 				store(nAddrS1, maRegs[stInst.R.nRd]);
@@ -503,7 +504,7 @@ private:
 			{
 				if (0x000 == stInst.I.nImm) // ECALL
 				{
-					PRINT_INST("ECALL A0: 0x%X\n", maRegs[GP_A0]);
+					PRINT_INST("%08X: ECALL A0: 0x%X\n", nPC, maRegs[GP_A0]);
 					if (0x2A == maRegs[GP_A0]) // 42
 					{
 						printf("\n\tSuccess\n\n");
@@ -514,30 +515,30 @@ private:
 				}	
 				else if (0x001 == stInst.I.nImm)// EBREAK
 				{
-					PRINT_INST("EBREAK\n");
+					PRINT_INST("%08X: EBREAK\n", nPC);
 				} 
 				else if (0x002 == stInst.I.nImm) // URET.
 				{
-					PRINT_INST("URET\n");
+					PRINT_INST("%08X: URET\n", nPC);
 				}
 				else if (0x102 == stInst.I.nImm) // SRET.
 				{
-					PRINT_INST("SRET\n");
+					PRINT_INST("%08X: SRET\n", nPC);
 				}
 				else if (0x202 == stInst.I.nImm) // HRET.
 				{
-					PRINT_INST("HRET\n");
+					PRINT_INST("%08X: HRET\n", nPC);
 				}
 				else if (0x302 == stInst.I.nImm) // MRET.
 				{
-					PRINT_INST("MRET\n");
+					PRINT_INST("%08X: MRET\n", nPC);
 					mnPC = maCSR[mepc];
 					maCSR[mcause] = 0;
 					maCSR[mstatus] |= BIT(MSTATUS_MIE);
 				}
 				else if (0x105 == stInst.I.nImm) // WFI
 				{
-					PRINT_INST("WFI\n");
+					PRINT_INST("%08X: WFI\n", nPC);
 					maCSR[mstatus] |= BIT(MSTATUS_MIE);
 					mbWFI = true;
 				}
@@ -545,7 +546,7 @@ private:
 			}
 			case 0b001:	// CSRRW: SWAP CSR value.
 			{
-				PRINT_INST("CSRRW %s %s 0x%X\n", REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
+				PRINT_INST("%08X: CSRRW %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
 				if (0 != stInst.I.nRd)
 				{
 					maRegs[stInst.I.nRd] = maCSR[stInst.I.nImm];
@@ -555,7 +556,7 @@ private:
 			}
 			case 0b010:	// CSRRS: Read and Set bit.
 			{
-				PRINT_INST("CSRRS %s %s 0x%X\n", REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
+				PRINT_INST("%08X: CSRRS %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
 				if (0 != maRegs[stInst.I.nRs1])
 				{
 					maRegs[stInst.I.nRd] = maCSR[stInst.I.nImm];
@@ -568,7 +569,7 @@ private:
 			}
 			case 0b011: // CSRRC: Read and Clear bit.
 			{
-				PRINT_INST("CSRRC %s %s 0x%X\n", REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
+				PRINT_INST("%08X: CSRRC %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
 				if (0 != maRegs[stInst.I.nRd])
 				{
 					maRegs[stInst.I.nRd] = maCSR[stInst.I.nImm];
@@ -581,7 +582,7 @@ private:
 			}
 			case 0b101: // CSRRWI: Imm
 			{
-				PRINT_INST("CSRRWI %s %s 0x%X\n", REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
+				PRINT_INST("%08X: CSRRWI %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
 				if (0 != maRegs[stInst.I.nRd])
 				{
 					maRegs[stInst.I.nRd] = maCSR[stInst.I.nImm];
@@ -591,7 +592,7 @@ private:
 			}
 			case 0b110: // CSRRSI: 
 			{
-				PRINT_INST("CSRRSI %s %s 0x%X\n", REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
+				PRINT_INST("%08X: CSRRSI %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
 				if (0 != maRegs[stInst.I.nRd])
 				{
 					maRegs[stInst.I.nRd] = maCSR[stInst.I.nImm];
@@ -601,7 +602,7 @@ private:
 			}
 			case 0b111: // CSRRCI.
 			{
-				PRINT_INST("CSRRCI %s %s 0x%X\n", REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
+				PRINT_INST("%08X: CSRRCI %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
 				if (0 != maRegs[stInst.I.nRd])
 				{
 					maRegs[stInst.I.nRd] = maCSR[stInst.I.nImm];
@@ -616,26 +617,22 @@ private:
 	/**
 	* @return true if continue, false on WFI.
 	*/
-	bool handleException()
+	inline bool handleException()
 	{
 		if (mbmTrap != 0)
 		{
-			if (maCSR[mstatus] & BIT(MSTATUS_MIE))
+			if (mbmTrap & BIT(TRAP_BUS))
 			{
-				// capture the interrupted pc into a CSR — called mepc
-				maCSR[mepc] = mnPC;
-				// capture the current privilege level into a CSR
-				// set the interrupt cause CSR — called mcause
-				maCSR[mcause] = 1;
-				// if the exception was due to a page fault then mtval holds the fault address
-				// turn off interrupts — mie
-				maCSR[mstatus] &= ~BIT(MSTATUS_MIE);
-				// look up the interrupt handler in the vector table specified by a CSR — called mtvec
-				uint32 nVAddr = maCSR[mtvec] + (4 * maTrapParam[TRAP_IRQ]);
-				load(nVAddr, &mnPC);
-				// and transfer control(set the pc) to the ISR
 
-				mbmTrap = 0;
+			}
+			else if (mbmTrap & BIT(TRAP_IRQ))
+			{
+				ASSERT(maCSR[mstatus] & BIT(MSTATUS_MIE));
+				maCSR[mepc] = mnPC;
+				maCSR[mstatus] &= ~BIT(MSTATUS_MIE);
+				uint32 nVAddr = maCSR[mtvec] + (4 * (int32)maCSR[mcause]);
+				load(nVAddr, &mnPC);
+				mbmTrap &= ~BIT(TRAP_IRQ);
 				mbWFI = false;
 			}
 		}
@@ -659,20 +656,19 @@ public:
 		mnCntMem++;
 	}
 
+	void Interrupt(uint32 nCode)
+	{
+		if (maCSR[mstatus] & BIT(MSTATUS_MIE))
+		{
+			mbmTrap |= BIT(TRAP_IRQ);
+			maCSR[mcause] = nCode;
+		}
+	}
+
 	void Exception(TrapType nType, uint32 nParam)
 	{
-		// TODO: WFI는 Enabled ISR에서만 깨어나는 건지.. 아니면, disable에서도 가능한지..
-		TrapType eType = (TrapType)nType;
-		if ((TRAP_IRQ == eType) && (maCSR[mstatus] & BIT(MSTATUS_MIE)))
-		{
-			mbmTrap |= BIT(nType);
-			maTrapParam[eType] = nParam;
-		}
-		else if ((TRAP_DECODE == eType) || (TRAP_BUS == eType))
-		{
-			mbmTrap |= BIT(nType);
-			maTrapParam[eType] = nParam;
-		}
+		mbmTrap |= BIT(nType);
+		mTrapParam = nParam;
 	}
 
 	bool Step()
@@ -696,7 +692,7 @@ public:
 			{
 				case 0b0010111: // AUIPC
 				{
-					PRINT_INST("AUIPC %s 0x%X\n", REGNAME(stInst.I.nRd), stInst.I.nImm);
+					PRINT_INST("%08X: AUIPC %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), stInst.I.nImm);
 					maRegs[stInst.U.nRd] = nPC + (int32)(stInst.U.nImm << 12);
 					break;
 				}
@@ -720,19 +716,19 @@ public:
 					{
 						case 0b000:  // SB
 						{
-							PRINT_INST("SB %s 0x%X (%s)\n", REGNAME(stInst.S.nRs2), (int32)nImm, REGNAME(stInst.S.nRs1));
+							PRINT_INST("%08X: SB %s 0x%X (%s)\n", nPC, REGNAME(stInst.S.nRs2), (int32)nImm, REGNAME(stInst.S.nRs1));
 							eMR = store(nAddr, (uint8)nVal);
 							break;
 						}
 						case 0b001:  // SH
 						{
-							PRINT_INST("SH %s 0x%X (%s)\n", REGNAME(stInst.S.nRs2), (int32)nImm, REGNAME(stInst.S.nRs1));
+							PRINT_INST("%08X: SH %s 0x%X (%s)\n", nPC, REGNAME(stInst.S.nRs2), (int32)nImm, REGNAME(stInst.S.nRs1));
 							eMR = store(nAddr, (uint16)nVal);
 							break;
 						}
 						case 0b010:  // SW
 						{
-							PRINT_INST("SW %s 0x%X (%s)\n", REGNAME(stInst.S.nRs2), (int32)nImm, REGNAME(stInst.S.nRs1));
+							PRINT_INST("%08X: SW %s 0x%X (%s)\n", nPC, REGNAME(stInst.S.nRs2), (int32)nImm, REGNAME(stInst.S.nRs1));
 							eMR = store(nAddr, (uint32)nVal);
 							break;
 						}
@@ -753,7 +749,7 @@ public:
 					{
 						case 0b000:	// LB
 						{
-							PRINT_INST("LB %s 0x%X (%s)\n", REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
+							PRINT_INST("%08X: LB %s 0x%X (%s)\n", nPC, REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
 							uint8 nRead;
 							eMR = load(nSrcAddr, &nRead);
 							maRegs[stInst.I.nRd] = (int8)nRead;
@@ -761,7 +757,7 @@ public:
 						}
 						case 0b001:	// LH
 						{
-							PRINT_INST("LH %s 0x%X (%s)\n", REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
+							PRINT_INST("%08X: LH %s 0x%X (%s)\n", nPC, REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
 							uint16 nRead;
 							eMR = load(nSrcAddr, &nRead);
 							maRegs[stInst.I.nRd] = (int16)nRead;
@@ -769,7 +765,7 @@ public:
 						}
 						case 0b010:	// LW
 						{
-							PRINT_INST("LW %s 0x%X (%s)\n", REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
+							PRINT_INST("%08X: LW %s 0x%X (%s)\n", nPC, REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
 							uint32 nRead;
 							eMR = load(nSrcAddr, &nRead);
 							maRegs[stInst.I.nRd] = nRead;
@@ -777,7 +773,7 @@ public:
 						}
 						case 0b100:	// LBU
 						{
-							PRINT_INST("LBU %s 0x%X (%s)\n", REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
+							PRINT_INST("%08X: LBU %s 0x%X (%s)\n", nPC, REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
 							uint8 nRead;
 							eMR = load(nSrcAddr, &nRead);
 							maRegs[stInst.I.nRd] = nRead;
@@ -785,7 +781,7 @@ public:
 						}
 						case 0b101:	// LHU
 						{
-							PRINT_INST("LHU %s 0x%X (%s)\n", REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
+							PRINT_INST("%08X: LHU %s 0x%X (%s)\n", nPC, REGNAME(stInst.I.nRd), (int32)nImm, REGNAME(stInst.I.nRs1));
 							uint16 nRead;
 							eMR = load(nSrcAddr, &nRead);
 							maRegs[stInst.I.nRd] = nRead;
@@ -798,7 +794,7 @@ public:
 				case 0b0110111:	// LUI. Load Upper Imm.
 				{
 					maRegs[stInst.U.nRd] = stInst.U.nImm << 12;
-					PRINT_INST("LUI %s 0x%X\n", REGNAME(stInst.U.nRd), stInst.U.nImm << 12);
+					PRINT_INST("%08X: LUI %s 0x%X\n", nPC, REGNAME(stInst.U.nRd), stInst.U.nImm << 12);
 					break;
 				}
 				case 0b1101111:	// JAL.
@@ -811,7 +807,7 @@ public:
 						nImm20 |= 0xFFF00000;
 					}
 					mnPC = nPC + (int32)(nImm20 * 2);	// 주소는 2B aligned.
-					PRINT_INST("JAL %s 0x%X\n", REGNAME(stInst.J.nRd), (int32)(nImm20 * 2));
+					PRINT_INST("%08X: JAL %s 0x%X\n", nPC, REGNAME(stInst.J.nRd), (int32)(nImm20 * 2));
 					break;
 				}
 				case 0b1100111:	// JALR.
@@ -826,7 +822,7 @@ public:
 						maRegs[stInst.I.nRd] = nPC + 4;
 					}
 					mnPC = maRegs[stInst.I.nRs1] + (int32)nImm;
-					PRINT_INST("JAL %s %s 0x%X\n", REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
+					PRINT_INST("%08X: JAL %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
 					break;
 				}
 				case 0b1100011: // BEQ, BNE, BLT, BLTU, BGEU

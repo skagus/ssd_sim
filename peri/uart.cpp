@@ -65,13 +65,13 @@ public:
 			mnStatus &= ~UART_TX_BUSY;
 			if (nullptr != mpIrqCore)
 			{
-				mpIrqCore->Exception(TRAP_IRQ, mnIrqId);
+				mpIrqCore->Interrupt(mnIrqId);
 			}
 		}
 		else
 		{
 			mnStatus |= UART_RX_RDY;
-			mpIrqCore->Exception(TRAP_IRQ, mnIrqId);
+			mpIrqCore->Interrupt(mnIrqId);
 		}
 	}
 
@@ -175,7 +175,7 @@ public:
 			mnStatus |= UART_RX_RDY;
 			if (mpIrqCore)
 			{
-				mpIrqCore->Exception(TRAP_IRQ, mnIrqId);
+				mpIrqCore->Interrupt(mnIrqId);
 			}
 		}
 	}
@@ -189,7 +189,7 @@ void handleUart(void* pInEvt)
 {
 	UartEvt* pEvt = (UartEvt*)pInEvt;
 	_putch(pEvt->nData);
-	pEvt->pThis->Done(pEvt->bTx); // add Interrupt.
+	pEvt->pThis->Done(pEvt->bTx); // add handleException.
 }
 
 /**
