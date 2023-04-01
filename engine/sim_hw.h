@@ -15,6 +15,7 @@ HW ID: 같은 handler를 사용하게 된다.
 enum HwID
 {
 	HW_UART,
+	HW_TIMER,
 	NUM_HW,
 };
 

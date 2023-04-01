@@ -27,12 +27,14 @@
     <ClInclude Include="..\engine\sim.h" />
     <ClInclude Include="..\engine\sim_conf.h" />
     <ClInclude Include="..\engine\sim_hw.h" />
+    <ClInclude Include="..\peri\timer.h" />
     <ClInclude Include="..\peri\uart.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\core_rv32\rv32.cpp" />
     <ClCompile Include="..\engine\sim.cpp" />
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\peri\timer.cpp" />
     <ClCompile Include="..\peri\uart.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -42,6 +42,9 @@
     <ClInclude Include="..\engine\sim_hw.h">
       <Filter>engine</Filter>
     </ClInclude>
+    <ClInclude Include="..\peri\timer.h">
+      <Filter>peri</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\core_rv32\rv32.cpp">
@@ -53,6 +56,9 @@
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\engine\sim.cpp">
       <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\peri\timer.cpp">
+      <Filter>peri</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

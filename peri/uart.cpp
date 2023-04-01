@@ -4,19 +4,13 @@
 #include "macro.h"
 #include "core.h"
 #include "sim_hw.h"
+#include "uart.h"
 /**
 * UART의 memory 구조는.. 
 * +0 (4B) : Setup control.
 * +4 (2B) : 
 */
 
-#define UART_CFG_OFF		(0x00)
-#define UART_STATE_OFF		(0x04)
-#define UART_RX_BYTE		(0x08)
-#define UART_TX_BYTE		(0x0C)
-
-#define UART_RX_RDY			BIT(0)
-#define UART_TX_BUSY		BIT(1)
 
 void handleUart(void* pInEvt);
 
@@ -36,7 +30,7 @@ class UART : public Memory
 	uint32 mnRxBuf;
 //	uint32 mnTxBuf;
 
-	UartEvt* uart_NewEvt(bool bTx, uint32 nTimeout, uint8 nCh)
+	UartEvt* newEvt(bool bTx, uint32 nTimeout, uint8 nCh)
 	{
 		UartEvt* pNew = (UartEvt*)SIM_NewEvt(HW_UART, nTimeout);
 		pNew->bTx = bTx;
@@ -57,9 +51,9 @@ public:
 		SIM_AddHW(HwID::HW_UART, handleUart);
 	}
 
-	void Done(bool bTx)
+	void Handle(UartEvt* pEvt)
 	{
-		if(bTx)
+		if(pEvt->bTx)
 		{
 			ASSERT(mnStatus & UART_TX_BUSY);
 			mnStatus &= ~UART_TX_BUSY;
@@ -137,7 +131,6 @@ public:
 		}
 
 		MemRet eRet = MR_ERROR;
-
 		uint32 nOff = nAddr - mnBase;
 		if (UART_CFG_OFF == nOff)
 		{
@@ -158,7 +151,7 @@ public:
 		if (UART_TX_BYTE == nOff)
 		{
 			mnStatus |= UART_TX_BUSY;
-			uart_NewEvt(true, 10, nVal);
+			newEvt(true, 10, nVal);
 
 			return MR_OK;
 		}
@@ -189,7 +182,7 @@ void handleUart(void* pInEvt)
 {
 	UartEvt* pEvt = (UartEvt*)pInEvt;
 	_putch(pEvt->nData);
-	pEvt->pThis->Done(pEvt->bTx); // add handleException.
+	pEvt->pThis->Handle(pEvt); // add handleException.
 }
 
 /**

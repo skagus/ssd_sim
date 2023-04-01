@@ -48,7 +48,7 @@ public:
 	virtual MemRet Store(uint32 nAddr, uint16 nVal) { return MR_ERROR; };
 	virtual MemRet Store(uint32 nAddr, uint8 nVal) { return MR_ERROR; };
 
-	void EnableInt(CpuCore* pCore, uint32 nIdx)
+	void AttatchIRQ(CpuCore* pCore, uint32 nIdx)
 	{
 		mpIrqCore = pCore;
 		mnIrqId = nIdx;

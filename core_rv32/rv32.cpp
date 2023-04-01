@@ -505,13 +505,35 @@ private:
 				if (0x000 == stInst.I.nImm) // ECALL
 				{
 					PRINT_INST("%08X: ECALL A0: 0x%X\n", nPC, maRegs[GP_A0]);
-					if (0x2A == maRegs[GP_A0]) // 42
+					if (0 == maRegs[GP_A0]) // Test Failure.
+					{
+						printf("\n\tFaile\n\n");
+						ASSERT(false);
+					}
+					else if (0x2A == maRegs[GP_A0]) // Test success.
 					{
 						printf("\n\tSuccess\n\n");
 						exit(0);
 					}
-					printf("\t\tFAIL with %d\n", maRegs[GP_A0]);
-					ASSERT(false);
+					else if (1 == maRegs[GP_A0]) // Print line.
+					{
+						uint8 nVal;
+						uint32 nDataAddr = maRegs[GP_A1];
+						while (true)
+						{
+							load(nDataAddr, &nVal);
+							if (0 == nVal)
+							{
+								break;
+							}
+							putchar(nVal);
+							nDataAddr++;
+						}
+					}
+					else
+					{
+						ASSERT(false);
+					}
 				}	
 				else if (0x001 == stInst.I.nImm)// EBREAK
 				{

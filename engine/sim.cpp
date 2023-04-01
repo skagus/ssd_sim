@@ -8,6 +8,7 @@
 #include "sim_hw.h"
 #include "core.h"	// for CPU_Start()
 #include "uart.h"
+#include "timer.h"
 
 using namespace std;
 
@@ -121,6 +122,8 @@ void SIM_PowerDown()
 
 #define BASE_SRAM	(0x80000000)
 #define BASE_UART	(0x20000000)
+#define BASE_TIMER	(0x20001000)
+
 
 CpuCore* makeCore()
 {
@@ -145,7 +148,12 @@ CpuCore* makeCore()
 
 	Memory* pUart = UART_CreateHW(BASE_UART);
 	pstCore->AddMemory(pUart);
-	pUart->EnableInt(pstCore, 1);
+	pUart->AttatchIRQ(pstCore, HW_UART);
+
+	Memory* pTimer = TIMER_CreateHW(BASE_TIMER);
+	pstCore->AddMemory(pTimer);
+	pTimer->AttatchIRQ(pstCore, HW_TIMER);
+
 	return pstCore;
 }
 

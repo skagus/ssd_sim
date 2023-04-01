@@ -2,15 +2,24 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#define BASE_UART		(0x20000000)
+#define BASE_UART				(0x20000000)
 
-#define UART_CFG		(BASE_UART + 0x4)
-#define UART_STATUS		(BASE_UART + 0x4)
-#define UART_RX_BUF		(BASE_UART + 0x8)
-#define UART_TX_BUF		(BASE_UART + 0xC)
+#define UART_CFG				(BASE_UART + 0x4)
+#define UART_STATUS				(BASE_UART + 0x4)
+#define UART_RX_BUF				(BASE_UART + 0x8)
+#define UART_TX_BUF				(BASE_UART + 0xC)
 
 #define UART_RX_RDY		(1 << 0)
 #define UART_TX_BUSY	(1 << 1)
+
+#define BASE_TIMER				(0x20001000)
+#define TIMER_CFG				(BASE_TIMER + 0x00)
+#define TIMER_PERIOD			(BASE_TIMER + 0x04)
+#define TIMER_CUR_VAL			(BASE_TIMER + 0x08)
+#define TIMER_TICK_CLK			(BASE_TIMER + 0x0C)
+
+
+
 
 char uart_rx()
 {
@@ -82,19 +91,20 @@ void asm_demo_func();
 
 // These will not turn into function calls, but instead will find a way
 // of writing the assembly in-line
-static void lprint( const char * s )
+static void lprint(int nId, const char* s )
 {
-	asm volatile( "csrrw x0, 0x138, %0\n" : : "r" (s));
+//	asm volatile( "ecall %[dst], %[src], 0x10\n": [dst]"=r"(s) : [src]"r"(s));
+	asm volatile("ecall");
 }
 
 static void pprint( intptr_t ptr )
 {
-	asm volatile( "csrrw x0, 0x137, %0\n" : : "r" (ptr));
+	asm volatile("csrrw x0, 0x138, %0\n" : : "r" (ptr));
 }
 
 static void nprint( intptr_t ptr )
 {
-	asm volatile( "csrrw x0, 0x136, %0\n" : : "r" (ptr));
+	asm volatile("csrrw x0, 0x136, %0\n" : : "r" (ptr));
 }
 
 static inline uint32_t get_cyc_count() {
@@ -105,18 +115,33 @@ static inline uint32_t get_cyc_count() {
 
 volatile uint32_t gnTemp;
 volatile uint32_t gnTemp2;
-__attribute__((interrupt("machine"))) void DummyISR(void)
+__attribute__((interrupt("machine"))) void ISR_Uart(void)
 {
 	uint32_t nTmp = gnTemp + gnTemp2 + 1;
 	gnTemp = nTmp;
 	return;
 }
 
+__attribute__((interrupt("machine"))) void ISR_Timer(void)
+{
+	uint32_t nTmp = gnTemp + gnTemp2 + 1;
+	gnTemp = nTmp;
+	return;
+}
+
+__attribute__((interrupt("machine"))) void ISR_Dummy(void)
+{
+	uint32_t nTmp = gnTemp + gnTemp2 + 1;
+	gnTemp = nTmp;
+	return;
+}
+
+
 void (*gaISR[])() =
 {
-	DummyISR,
-	DummyISR,
-	DummyISR,
+	ISR_Uart,
+	ISR_Timer,
+	ISR_Dummy,
 };
 
 void init_vectable()
@@ -140,14 +165,14 @@ int main()
 	get_line(aBuf);
 	print(aBuf);
 	
-	print("End get line\n");
-	lprint("\n");
-	lprint("Hello world from RV32 land.\n");
-	lprint("main is at: ");
+	print("\nEnd get line\n");
+	lprint(1, "\n");
+	lprint(1, "Hello world from RV32 land.\n");
+	lprint(1, "main is at: ");
 	pprint( (intptr_t)main );
-	lprint("\nAssembly code: ");
+	lprint(1, "\nAssembly code: ");
 	asm_demo_func();
-	lprint("\n");
+	lprint(1, "\n");
 
 	// Wait a while.
 	uint32_t cyclecount_initial = get_cyc_count();
@@ -163,11 +188,11 @@ int main()
 	uint32_t cyclecount = get_cyc_count() - cyclecount_initial;
 	uint32_t timer = TIMERL - timer_initial;
 
-	lprint( "Processor effective speed: ");
+	lprint(1, "Processor effective speed: ");
 	nprint( cyclecount / timer );
-	lprint( " Mcyc/s\n");
+	lprint(1, " Mcyc/s\n");
 
-	lprint("\n");
+	lprint(1, "\n");
 	while(1);
 	
 	SYSCON = 0x5555; // Power off
