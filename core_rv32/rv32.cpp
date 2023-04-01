@@ -705,11 +705,16 @@ public:
 				}
 				case 0b1100111:	// JALR.
 				{
+					uint32 nImm = stInst.I.nImm;
+					if (0x800 & nImm)
+					{
+						nImm |= 0xFFFFF000;
+					}
 					if (0 != stInst.I.nRd)
 					{
 						maRegs[stInst.I.nRd] = nPC + 4;
 					}
-					mnPC = maRegs[stInst.I.nRs1] + stInst.I.nImm;
+					mnPC = maRegs[stInst.I.nRs1] + (int32)nImm;
 					break;
 				}
 				case 0b1100011: // BEQ, BNE, BLT, BLTU, BGEU
