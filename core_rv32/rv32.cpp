@@ -8,8 +8,8 @@
 #define UN_SUPPORTED()		assert(false)
 #define UNDEF_INST(nAddr)	Exception(TRAP_DECODE, nAddr)
 #define XLEN				(32)
-//#define PRINT_INST(...)		printf(__VA_ARGS__)
-#define PRINT_INST(...)
+#define PRINT_INST(...)		// printf(__VA_ARGS__)
+//#define PRINT_INST(...)
 #define REGNAME(idx)		(gaRegName[idx])
 const char* gaRegName[]
 {
@@ -554,9 +554,20 @@ private:
 				else if (0x302 == stInst.I.nImm) // MRET.
 				{
 					PRINT_INST("%08X: MRET\n", nPC);
-					mnPC = maCSR[mepc];
-					maCSR[mcause] = 0;
-					maCSR[mstatus] |= BIT(MSTATUS_MIE);
+					if (maCSR[mip]) // Pending interrupt exist.
+					{
+						int32 nIsrCode = BIT_SCAN_LSB(maCSR[mip]);
+						BIT_CLR(maCSR[mip], BIT(nIsrCode));
+						maCSR[mcause] = nIsrCode;
+						uint32 nVAddr = maCSR[mtvec] + (4 * nIsrCode);
+						load(nVAddr, &mnPC);
+					}
+					else
+					{
+						mnPC = maCSR[mepc];
+						maCSR[mstatus] |= BIT(MSTATUS_MIE);
+						maCSR[mcause] = FF32;
+					}
 				}
 				else if (0x105 == stInst.I.nImm) // WFI
 				{
@@ -652,7 +663,11 @@ private:
 				ASSERT(maCSR[mstatus] & BIT(MSTATUS_MIE));
 				maCSR[mepc] = mnPC;
 				maCSR[mstatus] &= ~BIT(MSTATUS_MIE);
-				uint32 nVAddr = maCSR[mtvec] + (4 * (int32)maCSR[mcause]);
+
+				int32 nIsrCode = BIT_SCAN_LSB(maCSR[mip]);
+				BIT_CLR(maCSR[mip], BIT(nIsrCode));
+				maCSR[mcause] = nIsrCode;
+				uint32 nVAddr = maCSR[mtvec] + (4 * nIsrCode);
 				load(nVAddr, &mnPC);
 				mbmTrap &= ~BIT(TRAP_IRQ);
 				mbWFI = false;
@@ -670,6 +685,7 @@ public:
 		mbWFI = false;
 		mnPC = nStart;
 		maCSR[mcycle] = 0;
+		maCSR[mcause] = FF32;
 	}
 
 	void AddMemory(Memory* pMem)
@@ -683,8 +699,8 @@ public:
 		if (maCSR[mstatus] & BIT(MSTATUS_MIE))
 		{
 			mbmTrap |= BIT(TRAP_IRQ);
-			maCSR[mcause] = nCode;
 		}
+		BIT_SET(maCSR[mip], BIT(nCode));
 	}
 
 	void Exception(TrapType nType, uint32 nParam)

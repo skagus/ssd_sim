@@ -13,8 +13,8 @@ struct TimerEvt
 };
 
 /**
-* ÀÌ Å¸ÀÌ¸Ó´Â, periodic down count mode¸¸ Áö¿øÇÑ´Ù. 
-* ISR Áö¿ø°¡´É.
+* ì´ íƒ€ì´ë¨¸ëŠ”, periodic down count modeë§Œ ì§€ì›í•œë‹¤. 
+* ISR ì§€ì›ê°€ëŠ¥.
 */
 class Timer : public Memory
 {
@@ -103,7 +103,7 @@ public:
 		uint32 nOff = nAddr - mnBase;
 		if (TIMER_CFG_OFS == nOff)
 		{
-			// Timer EnableÀ» ÀûÀ» ¶§¸¶´Ù timer¸¦ »õ·Î ½ÃÀÛÇÑ´Ù.(ÀÌÀü °ªÀº Áß¿äÇÏÁö ¾ÊÀ½)
+			// Timer Enableì„ ì ì„ ë•Œë§ˆë‹¤ timerë¥¼ ìƒˆë¡œ ì‹œìž‘í•œë‹¤.(ì´ì „ ê°’ì€ ì¤‘ìš”í•˜ì§€ ì•ŠìŒ)
 			if (TIMER_ENABLE & nVal)
 			{
 				if (nullptr != mpPrvEvt)
@@ -111,6 +111,7 @@ public:
 					mpPrvEvt->bValid = false;
 				}
 				mpPrvEvt = newEvt(mnTickPeriod);
+				mnRestTick = mnPeriod;
 			}
 			mnCfg = nVal;
 		}

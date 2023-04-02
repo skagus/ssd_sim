@@ -197,10 +197,11 @@ void SIM_Run()
 					if (pCpu->Step())
 					{
 						// ASSERT(false);	// Event도 없고, CPU도 WFI 인 상황은 없어야 함.
-						UART_PollRx();
+						
 					}
 					gnTick++;
 				}
+				UART_PollRx();
 			}
 			ASSERT(nullptr != pEvt);
 			gEvtQue.pop();
