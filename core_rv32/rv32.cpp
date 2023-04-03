@@ -530,6 +530,12 @@ private:
 							nDataAddr++;
 						}
 					}
+					else if (2 == maRegs[GP_A0])
+					{
+						char aBuf[16];
+						sprintf(aBuf, "%d", maRegs[GP_A1]);
+						printf(aBuf);
+					}
 					else
 					{
 						ASSERT(false);
@@ -590,7 +596,7 @@ private:
 			case 0b010:	// CSRRS: Read and Set bit.
 			{
 				PRINT_INST("%08X: CSRRS %s %s 0x%X\n", nPC, REGNAME(stInst.I.nRd), REGNAME(stInst.I.nRs1), stInst.I.nImm);
-				if (0 != maRegs[stInst.I.nRs1])
+				if (0 != maRegs[stInst.I.nRd])
 				{
 					maRegs[stInst.I.nRd] = maCSR[stInst.I.nImm];
 				}
@@ -680,11 +686,11 @@ public:
 	void Init(uint32 nStart)
 	{
 		mnCntMem = 0;
-		memset(maRegs, 0, sizeof(maRegs));
+		MEMSET_ARRAY(maRegs, 0x0);
+		MEMSET_ARRAY(maCSR, 0x0);
 		mbmTrap = 0;
 		mbWFI = false;
 		mnPC = nStart;
-		maCSR[mcycle] = 0;
 		maCSR[mcause] = FF32;
 	}
 
@@ -717,9 +723,8 @@ public:
 		}
 
 		CmdFormat stInst;
-
 		MemRet eMR = load(mnPC, &stInst.nRaw);
-		maCSR[mcycle]++;
+		maCSR[cycle]++;
 		if (MR_OK == eMR)
 		{
 			uint32 nPC = mnPC;

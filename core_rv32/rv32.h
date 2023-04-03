@@ -84,6 +84,16 @@ enum CsrId
 	mhpmcount3 = 0xB03, // 연속.
 	mhpmcount31 = 0xB1F,
 
+	cycle = 0xC00,
+	time,
+	instret,
+	hpmconter3, // 연속. ~ hpmcounter31
+
+	cycleh = 0xC80,
+	timeh,
+	instreth,
+	hpmconter3h, // 연속. ~ hpmcounter31h
+
 	NUM_CSR,
 };
 

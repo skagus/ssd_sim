@@ -1,6 +1,4 @@
 #include <stdint.h>
-#include <stdio.h>
-#include <stdarg.h>
 
 #define BIT(x)			(1 << (x))
 
@@ -102,12 +100,20 @@ void init_timer()
 // This is just a definition for a symbol found in the .S file.
 void asm_demo_func();
 
+volatile void syscall(int nId, unsigned int nParam)
+{
+	asm volatile("ecall");
+}
 // These will not turn into function calls, but instead will find a way
 // of writing the assembly in-line
-static void lprint(int nId, const char* s )
+static void lprint(const char* s )
 {
-//	asm volatile( "ecall %[dst], %[src], 0x10\n": [dst]"=r"(s) : [src]"r"(s));
-	asm volatile("ecall");
+	syscall(1, (unsigned int)s);
+}
+
+static void nprint(unsigned int n)
+{
+	syscall(2, n);
 }
 
 static inline uint32_t get_cyc_count() {
@@ -168,12 +174,9 @@ int main()
 	uart_print(aBuf);
 	
 	uart_print("\nEnd get line\n");
-	lprint(1, "\n");
-	lprint(1, "Hello world from RV32 land.\n");
-	lprint(1, "main is at: ");
-	lprint(1, "\nAssembly code: ");
+	lprint("\nAssembly code: ");
 	asm_demo_func();
-	lprint(1, "\n");
+	lprint("\n");
 
 	// Wait a while.
 	uint32_t cyclecount_initial = get_cyc_count();
@@ -186,11 +189,10 @@ int main()
 
 	// Gather the wall-clock time and # of cycles
 	uint32_t cyclecount = get_cyc_count() - cyclecount_initial;
-
-	lprint(1, "Processor effective speed: ");
-	lprint(1, " Mcyc/s\n");
-
-	lprint(1, "\n");
+	lprint("Processor cycle counter: ");
+	nprint(cyclecount);
+	lprint("\n");
+	
 	while(1);
 }
 
