@@ -196,7 +196,7 @@ void SIM_Run()
 					pEvt = nullptr;
 					if (pCpu->Step())
 					{
-						// ASSERT(false);	// Eventµµ ¾ø°í, CPUµµ WFI ÀÎ »óÈ²Àº ¾ø¾î¾ß ÇÔ.
+						// ASSERT(false);	// Eventë„ ì—†ê³ , CPUë„ WFI ì¸ ìƒí™©ì€ ì—†ì–´ì•¼ í•¨.
 						
 					}
 					gnTick++;
